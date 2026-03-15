@@ -4,9 +4,27 @@ import datetime
 from django.utils import timezone
 
 from .models import Question
-
+from django.urls import reverse
 
 # Create your tests here.
+def create_question(question_text, days):
+    """
+    createa  question with question_text, and published the give num of days offest to now 
+    """
+    time = timezone.now() + datetime.timedelta(days=days)
+    return Question.objects.create(question_text=question_text, pub_date=time)
+
+class QuestionIndexViewTests(TestCase):
+    def test_no_questions(self):
+        """
+        if no questions, then display proper message 
+        """
+        response = self.client.get(reverse("polls:index"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "No polls are available.")
+
+        self.assertQuerySetEqual(response.context["latest_question_list"], [])
+
 
 class QuestionModelTests(TestCase):
     def test_was_published_recently_with_future_question(self):
