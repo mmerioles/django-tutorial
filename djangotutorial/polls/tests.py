@@ -25,6 +25,56 @@ class QuestionIndexViewTests(TestCase):
 
         self.assertQuerySetEqual(response.context["latest_question_list"], [])
 
+    def test_past_question(self):
+        """
+        Question with a pub date in past are displayed on on index
+        """
+        question = create_question(question_text="Past question.", days=-30)
+        response = self.client.get(reverse("polls:index"))
+        self.assertQuerySetEqual(
+                response.context["latest_question_list"],
+                [question],
+        )
+
+    def test_future_question(self):
+        """
+        Question with a pub_dat in future arent displayed on index
+        """
+        question = create_question(question_text="Future question.", days=30)
+        response =  self.client.get(reverse("polls:index"))
+        self.assertContains(response, "No polls are available.")
+        self.assertQuerySetEqual(response.context["latest_question_list"], [])
+
+    def test_future_question_and_past_question(self):
+        """
+        If both future and past questions exist, only show the past question
+        """
+        question = create_question(question_text="Future question.", days=30)
+                                 
+        q2 = create_question(question_text="Past question.", days=-30)
+        response = self.client.get(reverse("polls:index"))
+        self.assertQuerySetEqual(
+            response.context["latest_question_list"],
+            [q2],
+        )
+
+    def test_two_past_questions(self):
+        """
+        Test if there was two past questions, and the current list includes both
+        """
+
+        question1 = create_question(question_text="Past 1 question.", days=-30)
+        question2 = create_question(question_text="Past 2 question.", days=-30)
+        response = self.client.get(reverse("polls:index"))
+        self.assertQuerySetEqual(
+            response.context["latest_question_list"],
+            [question2, question1],
+        )
+
+
+                                 
+    
+
 
 class QuestionModelTests(TestCase):
     def test_was_published_recently_with_future_question(self):
